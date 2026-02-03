@@ -469,6 +469,12 @@ body {
     border-radius: 20px;
 }
 
+.love-message-wrapper {
+    display: flex;
+    justify-content: end;
+    width: 100%;
+}
+
 .love-message {
     font-size: 1rem;
     color: var(--pink-dark);
