@@ -50,6 +50,12 @@ function safeName(x) {
     return x.toString().trim().slice(0, 30);
 }
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // ============================================
 // Configuration
 // ============================================
@@ -187,7 +193,7 @@ function initViewerMode(from, to) {
     show(viewerScreen);
     
     // Update the title and subtitle with safe text content
-    titleText.textContent = `Hey ${state.toName} 👀`;
+    titleText.innerHTML = `Hey ${escapeHtml(state.toName)} <span class="emoji">👀</span>`;
     subText.textContent = `${state.fromName} is asking: Will you be my Valentine?`;
     
     // Detect device type

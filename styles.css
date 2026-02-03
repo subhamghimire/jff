@@ -158,6 +158,11 @@ body {
     line-height: 1.2;
 }
 
+.title .emoji {
+    -webkit-text-fill-color: initial;
+    background: none;
+}
+
 .subtitle {
     font-size: 1.1rem;
     color: var(--gray-dark);
@@ -469,6 +474,7 @@ body {
     color: var(--pink-dark);
     font-weight: 600;
     margin: 15px 0;
+    text-align: center;
     animation: pulse 2s ease-in-out infinite;
 }
 
