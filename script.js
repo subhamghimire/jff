@@ -60,7 +60,7 @@ const CONFIG = {
     dodgeDebounce: 100,
     
     // Mobile tap messages
-    tapMessages: ['No', 'Are you sure?', 'Really? 🤔', 'Come on! 😅', 'Nope! 😂', 'Nice try 😏', '👀'],
+    tapMessages: ['No', 'Are you sure?', 'Really? 🤔', 'Come on! 😅', 'Nope! 😂', 'Nice try 😏', 'Not happening 🙅', 'Think again 💭', 'Wrong answer! ❌', 'Try the other button 👆', 'Still no? 🥺', 'Please? 🥹', 'Pretty please? 💕', '👀'],
     
     // Falling emoji settings
     emojis: ['💖', '🌹', '😘', '💘', '🌸', '❤️', '💕', '💗', '💝', '✨'],
