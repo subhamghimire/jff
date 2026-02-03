@@ -377,9 +377,9 @@ function handleYesClick() {
     hide(teaseText);
     
     // Update celebration text with names
-    yayText.textContent = 'YAAAY!! 💖';
+    yayText.innerHTML = `YAAAY!! <span class="emoji">💖</span>`;
     celebrateSub.textContent = `${state.toName} said YES to ${state.fromName}! 🥰`;
-    loveMessage.textContent = `${state.fromName}, your heart just got happier! 💘`;
+    loveMessage.textContent = `You just made someone very happy 💖`;
     
     // Show celebration
     celebration.classList.add('active');

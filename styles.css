@@ -158,7 +158,8 @@ body {
     line-height: 1.2;
 }
 
-.title .emoji {
+.title .emoji,
+.celebration-title .emoji {
     -webkit-text-fill-color: initial;
     background: none;
 }
@@ -410,13 +411,20 @@ body {
 
 .celebration {
     display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     text-align: center;
     animation: fadeInUp 0.8s ease;
     margin-top: 20px;
+    width: 100%;
+    position: relative;
 }
 
 .celebration.active {
-    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @keyframes fadeInUp {
@@ -470,9 +478,9 @@ body {
 }
 
 .love-message-wrapper {
-    display: flex;
-    justify-content: end;
     width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 .love-message {
@@ -481,7 +489,13 @@ body {
     font-weight: 600;
     margin: 15px 0;
     text-align: center;
-    animation: pulse 2s ease-in-out infinite;
+    width: 100%;
+    animation: lovePulse 2s ease-in-out infinite;
+}
+
+@keyframes lovePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 /* ============================================
