@@ -60,7 +60,7 @@ const CONFIG = {
     dodgeDebounce: 100,
     
     // Mobile tap messages
-    tapMessages: ['No', 'Are you sure?', 'Really? 🤔', 'Come on! 😅', 'Bro... 😂', 'Nice try 😏', '👀'],
+    tapMessages: ['No', 'Are you sure?', 'Really? 🤔', 'Come on! 😅', 'Nope! 😂', 'Nice try 😏', '👀'],
     
     // Falling emoji settings
     emojis: ['💖', '🌹', '😘', '💘', '🌸', '❤️', '💕', '💗', '💝', '✨'],
@@ -342,7 +342,7 @@ function growYesButton() {
 // Tease Text
 // ============================================
 const teaseMessages = [
-    "Bro… you can't say no 😂",
+    "Hey… you can't say no 😂",
     "The NO button is broken 🙃",
     "Just say YES already! 💕",
     "Nice try! 😏",
