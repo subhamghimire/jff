@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create a playful Valentine's Day proposal for your crush with interactive buttons and fun animations">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💖</text></svg>">
+    <title>Valentine Link Generator 💖</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Floating hearts background -->
+    <div class="floating-hearts" aria-hidden="true">
+        <span class="heart">💕</span>
+        <span class="heart">💗</span>
+        <span class="heart">💖</span>
+        <span class="heart">💘</span>
+        <span class="heart">💝</span>
+        <span class="heart">💕</span>
+        <span class="heart">💗</span>
+        <span class="heart">💖</span>
+    </div>
+
+    <!-- Main Container -->
+    <main class="container" id="container">
+        
+        <!-- Create Screen (shown when no URL params) -->
+        <section id="createScreen" class="card">
+            <div class="card-icon">💌</div>
+            <h1 class="title">Make a Valentine Link</h1>
+            <p class="subtitle">Create a personalized link for your crush 😏</p>
+            
+            <div class="form-group">
+                <label for="fromInput">Your name</label>
+                <input 
+                    id="fromInput" 
+                    type="text" 
+                    placeholder="e.g. Subham" 
+                    maxlength="30"
+                    class="input-field"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="toInput">Their name</label>
+                <input 
+                    id="toInput" 
+                    type="text" 
+                    placeholder="e.g. Anisha" 
+                    maxlength="30"
+                    class="input-field"
+                >
+            </div>
+            
+            <button id="makeLinkBtn" class="btn btn-yes" type="button">
+                Generate Link 💘
+            </button>
+            
+            <div id="linkBox" class="link-box hidden">
+                <p class="link-label">Share this link with them:</p>
+                <div class="link-input-wrapper">
+                    <input id="shareLink" type="text" readonly class="link-input">
+                    <button id="copyBtn" class="btn btn-copy" type="button">
+                        Copy 📋
+                    </button>
+                </div>
+                <p class="link-hint">They won't be able to say no... literally 😂</p>
+            </div>
+        </section>
+
+        <!-- Viewer Screen (shown when URL has from/to params) -->
+        <section id="viewerScreen" class="card hidden">
+            <div class="card-icon">💝</div>
+            <h1 id="titleText" class="title">Will you be my Valentine?</h1>
+            <p id="subText" class="subtitle">Choose wisely 😇</p>
+            
+            <div class="button-row" id="buttonRow">
+                <button class="btn btn-yes" id="yesBtn" type="button">
+                    YES 💖
+                </button>
+                <button class="btn btn-no" id="noBtn" type="button">
+                    No
+                </button>
+            </div>
+            
+            <p class="tease-text" id="teaseText"></p>
+            
+            <!-- Celebration Section (Hidden Initially) -->
+            <div class="celebration" id="celebration">
+                <h2 class="celebration-title" id="yayText">YAAAY!! 💖</h2>
+                <p class="celebration-subtitle" id="celebrateSub">I knew you'd say yes! 🥰</p>
+                
+                <div class="gif-container">
+                    <img 
+                        id="danceGif"
+                        src="https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif" 
+                        alt="Happy dance celebration" 
+                        class="dance-gif"
+                    >
+                </div>
+                
+                <p class="love-message" id="loveMessage">You just made someone's heart skip a beat! 💘</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Falling emoji container -->
+    <div id="fallArea" aria-hidden="true"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
