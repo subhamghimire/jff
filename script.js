@@ -2,14 +2,16 @@
  * Valentine's Day Interactive Page
  * ================================
  * Two modes:
- * 1. CREATE MODE: Generate personalized Valentine links
- * 2. VIEWER MODE: See the Valentine question (NO dodges, YES celebrates!)
+ * 1. CREATE MODE: Generate personalized Valentine links with optional Quiz
+ * 2. QUIZ MODE: Answer questions before seeing the proposal
+ * 3. VALENTINE MODE: The big question (NO dodges, YES celebrates!)
  */
 
 // ============================================
 // DOM Elements
 // ============================================
 const createScreen = document.getElementById('createScreen');
+const quizScreen = document.getElementById('quizScreen');
 const viewerScreen = document.getElementById('viewerScreen');
 const container = document.getElementById('container');
 const fallArea = document.getElementById('fallArea');
@@ -21,6 +23,19 @@ const makeLinkBtn = document.getElementById('makeLinkBtn');
 const linkBox = document.getElementById('linkBox');
 const shareLink = document.getElementById('shareLink');
 const copyBtn = document.getElementById('copyBtn');
+const addQuestionBtn = document.getElementById('addQuestionBtn');
+const questionsContainer = document.getElementById('questionsContainer');
+
+// Quiz screen elements
+const quizTitle = document.getElementById('quizTitle');
+const questionText = document.getElementById('questionText');
+const quizAnswerInput = document.getElementById('quizAnswerInput');
+const hintContainer = document.getElementById('hintContainer');
+const hintText = document.getElementById('hintText');
+const submitQuizBtn = document.getElementById('submitQuizBtn');
+const showHintBtn = document.getElementById('showHintBtn');
+const quizFeedback = document.getElementById('quizFeedback');
+const progressIndicator = document.getElementById('progressIndicator');
 
 // Viewer screen elements
 const titleText = document.getElementById('titleText');
@@ -37,13 +52,8 @@ const loveMessage = document.getElementById('loveMessage');
 // ============================================
 // Utility Functions
 // ============================================
-function show(el) {
-    el.classList.remove('hidden');
-}
-
-function hide(el) {
-    el.classList.add('hidden');
-}
+function show(el) { el.classList.remove('hidden'); }
+function hide(el) { el.classList.add('hidden'); }
 
 function safeName(x) {
     if (!x) return '';
@@ -56,26 +66,43 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Base64URL Encoding/Decoding
+function encodePayload(payload) {
+    try {
+        const jsonStr = JSON.stringify(payload);
+        const base64 = btoa(unescape(encodeURIComponent(jsonStr)));
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (e) {
+        console.error('Encoding error:', e);
+        return null;
+    }
+}
+
+function decodePayload(str) {
+    try {
+        let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4) base64 += '=';
+        const jsonStr = decodeURIComponent(escape(atob(base64)));
+        return JSON.parse(jsonStr);
+    } catch (e) {
+        console.error('Decoding error:', e);
+        return null;
+    }
+}
+
 // ============================================
 // Configuration
 // ============================================
 const CONFIG = {
-    // Dodge settings (desktop)
     dodgeThreshold: 120,
     dodgePadding: 20,
     dodgeDebounce: 100,
-    
-    // Mobile tap messages
     tapMessages: ['No', 'Are you sure?', 'Really? 🤔', 'Come on! 😅', 'Nope! 😂', 'Nice try 😏', 'Not happening 🙅', 'Think again 💭', 'Wrong answer! ❌', 'Try the other button 👆', 'Still no? 🥺', 'Please? 🥹', 'Pretty please? 💕', '👀'],
-    
-    // Falling emoji settings
     emojis: ['💖', '🌹', '😘', '💘', '🌸', '❤️', '💕', '💗', '💝', '✨'],
     maxEmojis: 80,
     spawnRate: 100,
     fallDuration: { min: 3, max: 6 },
     emojiSize: { min: 1, max: 2.5 },
-    
-    // YES button growth
     yesGrowthFactor: 1.05
 };
 
@@ -89,24 +116,44 @@ let state = {
     emojiSpawnInterval: null,
     isHoverDevice: false,
     yesBtnScale: 1,
-    isViewerMode: false,
+    mode: 'create', // create, quiz, valentine
+    quizData: null,
+    currentQuestionIndex: 0,
     fromName: '',
     toName: ''
 };
 
 // ============================================
-// Mode Detection & Initialization
+// Initialization
 // ============================================
 function initApp() {
+    detectHoverDevice();
     const params = new URLSearchParams(window.location.search);
-    const from = params.get('from');
-    const to = params.get('to');
-    
-    if (from || to) {
-        // VIEWER MODE: Show the valentine question
-        initViewerMode(from, to);
+    const dataParam = params.get('data');
+    const fromParam = params.get('from');
+    const toParam = params.get('to');
+
+    if (dataParam) {
+        const payload = decodePayload(dataParam);
+        if (payload) {
+            state.fromName = safeName(payload.from) || 'Someone';
+            state.toName = safeName(payload.to) || 'you';
+            state.quizData = payload.quiz || [];
+            
+            if (state.quizData.length > 0) {
+                initQuizMode();
+            } else {
+                initValentineMode();
+            }
+        } else {
+            console.error('Invalid payload');
+            initCreateMode();
+        }
+    } else if (fromParam || toParam) {
+        state.fromName = safeName(fromParam) || 'Someone';
+        state.toName = safeName(toParam) || 'you';
+        initValentineMode();
     } else {
-        // CREATE MODE: Show link generator form
         initCreateMode();
     }
 }
@@ -115,21 +162,44 @@ function initApp() {
 // CREATE MODE
 // ============================================
 function initCreateMode() {
+    state.mode = 'create';
     show(createScreen);
+    hide(quizScreen);
     hide(viewerScreen);
     
-    // Generate link button
+    addQuestionBtn.addEventListener('click', addQuestionInput);
     makeLinkBtn.addEventListener('click', generateLink);
-    
-    // Copy button
     copyBtn.addEventListener('click', copyLink);
     
-    // Allow Enter key to generate link
+    // Allow Enter key to generate link in name fields
     toInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') generateLink();
     });
-    
-    console.log('💌 Create mode initialized!');
+}
+
+function addQuestionInput() {
+    const questionCount = questionsContainer.children.length;
+    if (questionCount >= 5) {
+        alert("Max 5 questions allowed! Keeps it fun 😉");
+        return;
+    }
+
+    const div = document.createElement('div');
+    div.className = 'question-block';
+    div.innerHTML = `
+        <h3>Question ${questionCount + 1}</h3>
+        <button class="remove-question-btn" type="button" onclick="this.parentElement.remove()">×</button>
+        <div class="form-group">
+            <input type="text" class="input-field q-input" placeholder="e.g. Where did we meet?" maxlength="80">
+        </div>
+        <div class="form-group">
+            <input type="text" class="input-field a-input" placeholder="Answer (e.g. Coffee shop)" maxlength="40">
+        </div>
+        <div class="form-group">
+            <input type="text" class="input-field h-input" placeholder="Hint (optional)" maxlength="60">
+        </div>
+    `;
+    questionsContainer.appendChild(div);
 }
 
 function generateLink() {
@@ -137,86 +207,205 @@ function generateLink() {
     const toName = safeName(toInput.value);
     
     if (!fromName || !toName) {
-        // Add shake animation to empty inputs
-        if (!fromName) {
-            fromInput.style.animation = 'shake 0.5s ease';
-            setTimeout(() => fromInput.style.animation = '', 500);
-        }
-        if (!toName) {
-            toInput.style.animation = 'shake 0.5s ease';
-            setTimeout(() => toInput.style.animation = '', 500);
-        }
+        if (!fromName) highlightError(fromInput);
+        if (!toName) highlightError(toInput);
         return;
     }
+
+    // Gather quiz data
+    const questionBlocks = document.querySelectorAll('.question-block');
+    const quiz = [];
     
-    // Build the link
-    const link = `${location.origin}${location.pathname}?from=${encodeURIComponent(fromName)}&to=${encodeURIComponent(toName)}`;
+    let isValid = true;
+    questionBlocks.forEach(block => {
+        const q = block.querySelector('.q-input').value.trim();
+        const a = block.querySelector('.a-input').value.trim();
+        const h = block.querySelector('.h-input').value.trim();
+        
+        if (!q || !a) {
+            isValid = false;
+            block.style.border = '2px solid var(--red-love)';
+        } else {
+            quiz.push({ q, a, h });
+            block.style.border = '1px solid var(--pink-light)';
+        }
+    });
+
+    if (!isValid) {
+        alert("Please fill in all questions and answers!");
+        return;
+    }
+
+    const payload = { from: fromName, to: toName, quiz };
+    const encoded = encodePayload(payload);
     
-    // Show the link box
+    if (!encoded) {
+        alert("Error generating link. Try simpler text.");
+        return;
+    }
+
+    const link = `${location.origin}${location.pathname}?data=${encoded}`;
     shareLink.value = link;
     show(linkBox);
-    
-    // Select the link text
     shareLink.focus();
     shareLink.select();
 }
 
-async function copyLink() {
-    const link = shareLink.value;
-    
-    try {
-        await navigator.clipboard.writeText(link);
-        // Visual feedback
-        const originalText = copyBtn.textContent;
-        copyBtn.textContent = 'Copied! ✅';
-        copyBtn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
-        
-        setTimeout(() => {
-            copyBtn.textContent = originalText;
-            copyBtn.style.background = '';
-        }, 2000);
-    } catch (err) {
-        // Fallback for older browsers
-        prompt('Copy this link:', link);
-    }
+function highlightError(el) {
+    el.style.animation = 'shake 0.5s ease';
+    el.style.borderColor = 'var(--red-love)';
+    setTimeout(() => {
+        el.style.animation = '';
+        el.style.borderColor = '';
+    }, 500);
 }
 
 // ============================================
-// VIEWER MODE
+// QUIZ MODE
 // ============================================
-function initViewerMode(from, to) {
-    state.isViewerMode = true;
-    state.fromName = safeName(from) || 'Someone';
-    state.toName = safeName(to) || 'you';
-    
+function initQuizMode() {
+    state.mode = 'quiz';
     hide(createScreen);
-    show(viewerScreen);
+    show(quizScreen);
+    hide(viewerScreen);
     
-    // Update the title and subtitle with safe text content
+    state.currentQuestionIndex = 0;
+    renderQuizQuestion(0);
+    
+    submitQuizBtn.addEventListener('click', checkAnswer);
+    showHintBtn.addEventListener('click', revealHint);
+    
+    quizAnswerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') checkAnswer();
+    });
+}
+
+function renderQuizQuestion(index) {
+    const q = state.quizData[index];
+    const total = state.quizData.length;
+    
+    quizTitle.textContent = `Question ${index + 1}/${total}`;
+    questionText.textContent = q.q;
+    quizAnswerInput.value = '';
+    quizAnswerInput.focus();
+    
+    // Reset UI state
+    hide(hintContainer);
+    quizFeedback.textContent = '';
+    quizFeedback.className = 'quiz-feedback';
+    
+    // Handle Hint Button
+    if (q.h) {
+        show(showHintBtn);
+        hintText.textContent = q.h;
+    } else {
+        hide(showHintBtn);
+    }
+    
+    // Update Progress Indicator
+    progressIndicator.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+        const dot = document.createElement('div');
+        dot.className = `progress-dot ${i === index ? 'active' : ''} ${i < index ? 'completed' : ''}`;
+        progressIndicator.appendChild(dot);
+    }
+}
+
+function normalizeAnswer(text) {
+    return text.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function checkAnswer() {
+    const userAnswer = normalizeAnswer(quizAnswerInput.value);
+    const expectedAnswer = normalizeAnswer(state.quizData[state.currentQuestionIndex].a);
+    
+    if (!userAnswer) return;
+
+    if (userAnswer === expectedAnswer) {
+        // Correct!
+        quizFeedback.textContent = "Correct! 🎉";
+        quizFeedback.className = "quiz-feedback success";
+        quizAnswerInput.style.borderColor = "#4CAF50";
+        
+        setTimeout(() => {
+            if (state.currentQuestionIndex < state.quizData.length - 1) {
+                state.currentQuestionIndex++;
+                renderQuizQuestion(state.currentQuestionIndex);
+                quizAnswerInput.style.borderColor = "";
+            } else {
+                finishQuiz();
+            }
+        }, 1000);
+    } else {
+        // Incorrect
+        const wrongMessages = ["Not quite! 😅", "Try again! 🤔", "Close, but no!", "Think harder! 🧠"];
+        quizFeedback.textContent = wrongMessages[Math.floor(Math.random() * wrongMessages.length)];
+        quizFeedback.className = "quiz-feedback error";
+        quizAnswerInput.style.animation = "shake 0.4s ease";
+        quizAnswerInput.style.borderColor = "var(--red-love)";
+        
+        setTimeout(() => {
+            quizAnswerInput.style.animation = "";
+        }, 400);
+    }
+}
+
+function revealHint() {
+    show(hintContainer);
+    hide(showHintBtn);
+}
+
+function finishQuiz() {
+    // Transition to Valentine Screen
+    quizScreen.style.opacity = '0';
+    setTimeout(() => {
+        hide(quizScreen);
+        initValentineMode();
+    }, 500);
+}
+
+// ============================================
+// VALENTINE MODE
+// ============================================
+function initValentineMode() {
+    state.mode = 'valentine';
+    hide(createScreen);
+    hide(quizScreen);
+    show(viewerScreen);
+    viewerScreen.style.opacity = '0';
+    
+    // Animate transition
+    setTimeout(() => {
+        viewerScreen.style.animation = 'fadeInUp 0.8s ease forwards';
+        viewerScreen.style.opacity = '1';
+    }, 100);
+    
     titleText.innerHTML = `Hey ${escapeHtml(state.toName)} <span class="emoji">👀</span>`;
     subText.textContent = `${state.fromName} is asking: Will you be my Valentine?`;
     
-    // Detect device type
-    detectHoverDevice();
-    
-    // Initialize button behaviors
-    if (state.isHoverDevice) {
+    if (detectHoverDevice()) {
         initDesktopDodge();
     } else {
         initMobileTap();
     }
     
-    // YES button click handler
     yesBtn.addEventListener('click', handleYesClick);
-    
-    console.log('💖 Viewer mode initialized!');
-    console.log(`From: ${state.fromName}, To: ${state.toName}`);
-    console.log(`Device type: ${state.isHoverDevice ? 'Desktop (hover)' : 'Mobile (touch)'}`);
 }
 
-// ============================================
-// Device Detection
-// ============================================
+// Copy link function
+async function copyLink() {
+    const link = shareLink.value;
+    try {
+        await navigator.clipboard.writeText(link);
+        const originalText = copyBtn.textContent;
+        copyBtn.textContent = 'Copied! ✅';
+        setTimeout(() => copyBtn.textContent = originalText, 2000);
+    } catch (err) {
+        prompt('Copy this link:', link);
+    }
+}
+
+// Helper for hover detection
 function detectHoverDevice() {
     state.isHoverDevice = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     return state.isHoverDevice;
@@ -252,7 +441,7 @@ function positionNoButtonInitially() {
 }
 
 function handleMouseMove(e) {
-    if (!state.isViewerMode) return;
+    if (state.mode !== 'valentine') return;
     
     const now = Date.now();
     if (now - state.lastDodgeTime < CONFIG.dodgeDebounce) return;
@@ -354,18 +543,14 @@ const teaseMessages = [
     "Nice try! 😏",
     "That's not how this works 😄",
     "You know you want to! 💖",
-    "The universe wants you to say YES ✨",
-    `Come on, ${state.toName}! 😊`
+    "The universe wants you to say YES ✨"
 ];
 
 function showTeaseText() {
     const randomMessage = teaseMessages[Math.floor(Math.random() * teaseMessages.length)];
     teaseText.textContent = randomMessage;
     teaseText.classList.add('visible');
-    
-    setTimeout(() => {
-        teaseText.classList.remove('visible');
-    }, 2500);
+    setTimeout(() => teaseText.classList.remove('visible'), 2500);
 }
 
 // ============================================
@@ -377,9 +562,9 @@ function handleYesClick() {
     hide(teaseText);
     
     // Update celebration text with names
-    yayText.innerHTML = `YAAAY!! <span class="emoji">💖</span>`;
+    yayText.textContent = 'YAAAY!! 💖';
     celebrateSub.textContent = `${state.toName} said YES to ${state.fromName}! 🥰`;
-    loveMessage.textContent = `You just made someone very happy 💖`;
+    loveMessage.textContent = `${state.fromName}, your heart just got happier! 💘`;
     
     // Show celebration
     celebration.classList.add('active');

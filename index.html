@@ -62,6 +62,14 @@
                 >
             </div>
             
+            <div id="questionsContainer">
+                <!-- Questions will be added here dynamically -->
+            </div>
+            
+            <button id="addQuestionBtn" class="btn btn-secondary" type="button">
+                + Add Question ❓
+            </button>
+            
             <button id="makeLinkBtn" class="btn btn-yes" type="button">
                 Generate Link 💘
             </button>
@@ -78,7 +86,42 @@
             </div>
         </section>
 
-        <!-- Viewer Screen (shown when URL has from/to params) -->
+        <!-- Quiz Screen (shown when URL has data param) -->
+        <section id="quizScreen" class="card hidden">
+            <div class="card-icon">🤔</div>
+            <h1 id="quizTitle" class="title">Quick quiz first 😏</h1>
+            <p class="subtitle">Prove you know me well!</p>
+            
+            <div class="quiz-content">
+                <p id="questionText" class="question-text"></p>
+                
+                <input 
+                    id="quizAnswerInput" 
+                    type="text" 
+                    placeholder="Type your answer..." 
+                    class="input-field"
+                    autocomplete="off"
+                >
+                
+                <div id="hintContainer" class="hint-container hidden">
+                    <p class="hint-text">💡 Hint: <span id="hintText"></span></p>
+                </div>
+                
+                <div class="button-row">
+                    <button id="submitQuizBtn" class="btn btn-yes" type="button">
+                        Submit Answer ✨
+                    </button>
+                    <button id="showHintBtn" class="btn btn-secondary hidden" type="button">
+                        Need a Hint? 💡
+                    </button>
+                </div>
+                
+                <p id="quizFeedback" class="quiz-feedback"></p>
+                <div class="progress-indicator" id="progressIndicator"></div>
+            </div>
+        </section>
+
+        <!-- Viewer Screen (shown when URL has from/to params ONLY or after quiz) -->
         <section id="viewerScreen" class="card hidden">
             <div class="card-icon">💝</div>
             <h1 id="titleText" class="title">Will you be my Valentine?</h1>
